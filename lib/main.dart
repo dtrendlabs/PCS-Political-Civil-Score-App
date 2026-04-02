@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'screens/profile_screen.dart';
+import 'screens/home_screen.dart';
 
 void main() {
   runApp(const PCSApp());
@@ -23,7 +23,7 @@ class PCSApp extends StatelessWidget {
         textTheme: GoogleFonts.poppinsTextTheme(),
         scaffoldBackgroundColor: const Color(0xFFF5F6FA),
       ),
-      home: const ProfileScreen(),
+      home: const HomeScreen(),
     );
   }
 }

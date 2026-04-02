@@ -43,3 +43,20 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# ─── 🔒 Secrets & API Keys (NEVER commit) ────────────────────────
+# The actual secrets file with real API keys
+lib/src/config/app_secrets.dart
+
+# Catch-all for any secrets/env files
+*.env
+*.env.*
+.agents/workflows/*.md
+.env.local
+.env.production
+secrets.dart
+**/secrets/
+*.keystore
+*.jks
+google-services.json
+GoogleService-Info.plist

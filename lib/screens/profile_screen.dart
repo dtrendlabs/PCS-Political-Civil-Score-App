@@ -10,55 +10,28 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  int _currentNavIndex = 2; // Profile tab active
+  bool _budgetExpanded = false;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          icon: const Icon(Icons.menu, color: Color(0xFF1B2A4A)),
-          onPressed: () {},
-        ),
-        title: Text(
-          'Civil Ledger',
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF1B2A4A),
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined,
-                color: Color(0xFF1B2A4A)),
-            onPressed: () {},
-          ),
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        children: [
+          _buildProfileHeader(),
+          const SizedBox(height: 20),
+          _buildCivilScoreSection(),
+          const SizedBox(height: 20),
+          _buildCriminalRecordSection(),
+          const SizedBox(height: 20),
+          _buildProjectPerformanceSection(),
+          const SizedBox(height: 20),
+          _buildGrievanceHistorySection(),
+          const SizedBox(height: 20),
+          _buildSubmitGrievanceButton(),
+          const SizedBox(height: 24),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildProfileHeader(),
-            const SizedBox(height: 20),
-            _buildCivilScoreSection(),
-            const SizedBox(height: 20),
-            _buildCriminalRecordSection(),
-            const SizedBox(height: 20),
-            _buildProjectPerformanceSection(),
-            const SizedBox(height: 20),
-            _buildGrievanceHistorySection(),
-            const SizedBox(height: 20),
-            _buildSubmitGrievanceButton(),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-      bottomNavigationBar: _buildBottomNavBar(),
     );
   }
 
@@ -70,10 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF1B2A4A),
-            Color(0xFF263B5E),
-          ],
+          colors: [Color(0xFF1B2A4A), Color(0xFF263B5E)],
         ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(32),
@@ -140,11 +110,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildBadge('Member since 2014', const Color(0xFF1B2A4A),
-                  const Color(0xFF4A90D9)),
+              _buildBadge(
+                'Member since 2014',
+                const Color(0xFF1B2A4A),
+                const Color(0xFF4A90D9),
+              ),
               const SizedBox(width: 10),
-              _buildBadge('District: North Meridian', const Color(0xFF1B3C2A),
-                  const Color(0xFF2ECC71)),
+              _buildBadge(
+                'District: North Meridian',
+                const Color(0xFF1B3C2A),
+                const Color(0xFF2ECC71),
+              ),
             ],
           ),
           const SizedBox(height: 28),
@@ -157,9 +133,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: Color.fromRGBO(bgColor.r.toInt(), bgColor.g.toInt(), bgColor.b.toInt(), 0.8),
+        color: bgColor.withAlpha(200),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Color.fromRGBO(borderColor.r.toInt(), borderColor.g.toInt(), borderColor.b.toInt(), 0.5), width: 1),
+        border: Border.all(color: borderColor.withAlpha(128), width: 1),
       ),
       child: Text(
         text,
@@ -236,12 +212,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 24),
             // Policy Royalty
-            _buildProgressRow('Policy Royalty', 0.83, '83%',
-                const Color(0xFF1B2A4A)),
+            _buildProgressRow(
+              'Policy Royalty',
+              0.83,
+              '83%',
+              const Color(0xFF1B2A4A),
+            ),
             const SizedBox(height: 14),
             // Legal Integrity
-            _buildProgressRow('Legal Integrity', 0.45, '45%',
-                const Color(0xFFE74C3C)),
+            _buildProgressRow(
+              'Legal Integrity',
+              0.45,
+              '45%',
+              const Color(0xFFE74C3C),
+            ),
           ],
         ),
       ),
@@ -249,7 +233,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildProgressRow(
-      String label, double value, String percent, Color color) {
+    String label,
+    double value,
+    String percent,
+    Color color,
+  ) {
     return Column(
       children: [
         Row(
@@ -322,8 +310,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF0F4FF),
                     borderRadius: BorderRadius.circular(8),
@@ -422,14 +412,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildRecordRow(String caseId, String charge, String description,
-      String status, Color statusColor, Color statusBgColor) {
+  Widget _buildRecordRow(
+    String caseId,
+    String charge,
+    String description,
+    String status,
+    Color statusColor,
+    Color statusBgColor,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFF2F4F7), width: 1),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFFF2F4F7), width: 1)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -476,8 +470,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Align(
               alignment: Alignment.topRight,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: statusBgColor,
                   borderRadius: BorderRadius.circular(6),
@@ -541,59 +534,101 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: const Color(0xFFF8F9FC),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Budget Efficiency',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF4A5568),
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Budget Efficiency',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF4A5568),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE8F8EF),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '+24.5%',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF2ECC71),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _budgetExpanded = !_budgetExpanded;
+                              });
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _budgetExpanded
+                                    ? const Color(0xFF1B2A4A)
+                                    : const Color(0xFFE67E22),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _budgetExpanded ? 'COLLAPSE' : 'EXPAND',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  AnimatedRotation(
+                                    turns: _budgetExpanded ? 0.5 : 0,
+                                    duration: const Duration(milliseconds: 200),
+                                    child: const Icon(
+                                      Icons.keyboard_arrow_down,
+                                      color: Colors.white,
+                                      size: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8F8EF),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          '+24.5%',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF2ECC71),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE67E22),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          'EXPAND',
-                          style: GoogleFonts.poppins(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                    ],
+                  // Expanded budget details
+                  AnimatedCrossFade(
+                    firstChild: const SizedBox.shrink(),
+                    secondChild: _buildBudgetDetails(),
+                    crossFadeState: _budgetExpanded
+                        ? CrossFadeState.showSecond
+                        : CrossFadeState.showFirst,
+                    duration: const Duration(milliseconds: 300),
                   ),
                 ],
               ),
@@ -602,24 +637,111 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // Stats row
             Row(
               children: [
-                Expanded(
-                  child: _buildStatItem(
-                    'AVG. DELAY',
-                    '8.4 Mo',
-                  ),
-                ),
+                Expanded(child: _buildStatItem('AVG. DELAY', '8.4 Mo')),
                 const SizedBox(width: 16),
-                Expanded(
-                  child: _buildStatItem(
-                    'ABANDONED',
-                    '02',
-                  ),
-                ),
+                Expanded(child: _buildStatItem('ABANDONED', '02')),
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBudgetDetails() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Column(
+        children: [
+          Container(height: 1, color: const Color(0xFFE8ECF0)),
+          const SizedBox(height: 14),
+          _buildBudgetRow(
+            'Total Allocated',
+            '\$4,200,000',
+            const Color(0xFF1B2A4A),
+          ),
+          const SizedBox(height: 10),
+          _buildBudgetRow(
+            'Amount Spent',
+            '\$3,150,000',
+            const Color(0xFF4A5568),
+          ),
+          const SizedBox(height: 10),
+          _buildBudgetRow(
+            'Under Budget',
+            '\$1,050,000',
+            const Color(0xFF2ECC71),
+          ),
+          const SizedBox(height: 10),
+          _buildBudgetRow(
+            'Cost Overruns',
+            '\$280,000',
+            const Color(0xFFE74C3C),
+          ),
+          const SizedBox(height: 14),
+          // Progress bar
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Budget Utilization',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF7A8BA5),
+                    ),
+                  ),
+                  Text(
+                    '75%',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1B2A4A),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              LinearPercentIndicator(
+                padding: EdgeInsets.zero,
+                lineHeight: 8,
+                percent: 0.75,
+                progressColor: const Color(0xFF4A90D9),
+                backgroundColor: const Color(0xFFE8ECF0),
+                barRadius: const Radius.circular(4),
+                animation: true,
+                animationDuration: 800,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBudgetRow(String label, String value, Color valueColor) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            color: const Color(0xFF7A8BA5),
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: valueColor,
+          ),
+        ),
+      ],
     );
   }
 
@@ -793,7 +915,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         width: double.infinity,
         height: 52,
         child: ElevatedButton.icon(
-          onPressed: () {},
+          onPressed: () => _showGrievanceForm(context),
           icon: const Icon(Icons.edit_note_rounded, size: 22),
           label: Text(
             'Submit New Grievance',
@@ -816,57 +938,279 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ─── Bottom Navigation Bar ────────────────────────────────────────
-  Widget _buildBottomNavBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: const Color.fromRGBO(0, 0, 0, 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: BottomNavigationBar(
-        currentIndex: _currentNavIndex,
-        onTap: (index) {
-          setState(() {
-            _currentNavIndex = index;
-          });
-        },
-        backgroundColor: Colors.white,
-        elevation: 0,
-        selectedItemColor: const Color(0xFF1B2A4A),
-        unselectedItemColor: const Color(0xFFB0BEC5),
-        selectedLabelStyle: GoogleFonts.poppins(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-        ),
-        unselectedLabelStyle: GoogleFonts.poppins(
-          fontSize: 11,
-          fontWeight: FontWeight.w500,
-        ),
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_outlined),
-            activeIcon: Icon(Icons.account_balance),
-            label: 'Civil',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-      ),
+  // ─── Grievance Form Bottom Sheet ─────────────────────────────────
+  void _showGrievanceForm(BuildContext context) {
+    String selectedCategory = 'Infrastructure';
+    final titleController = TextEditingController();
+    final descriptionController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
+                ),
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Handle bar
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE0E4EA),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      // Title
+                      Text(
+                        'Submit New Grievance',
+                        style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1B2A4A),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Your grievance will be recorded on the Civil Ledger.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: const Color(0xFF7A8BA5),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      // Grievance Title
+                      Text(
+                        'Title',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1B2A4A),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: titleController,
+                        style: GoogleFonts.poppins(fontSize: 14),
+                        decoration: InputDecoration(
+                          hintText: 'Brief title for your grievance',
+                          hintStyle: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: const Color(0xFFB0BEC5),
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFF8F9FC),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE0E4EA),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE0E4EA),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF4A90D9),
+                              width: 1.5,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      // Category
+                      Text(
+                        'Category',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1B2A4A),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8F9FC),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE0E4EA)),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: selectedCategory,
+                            isExpanded: true,
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: const Color(0xFF1B2A4A),
+                            ),
+                            dropdownColor: Colors.white,
+                            icon: const Icon(
+                              Icons.keyboard_arrow_down,
+                              color: Color(0xFF7A8BA5),
+                            ),
+                            items:
+                                [
+                                      'Infrastructure',
+                                      'Corruption',
+                                      'Public Services',
+                                      'Environment',
+                                      'Education',
+                                      'Healthcare',
+                                      'Other',
+                                    ]
+                                    .map(
+                                      (c) => DropdownMenuItem(
+                                        value: c,
+                                        child: Text(c),
+                                      ),
+                                    )
+                                    .toList(),
+                            onChanged: (value) {
+                              setSheetState(() {
+                                selectedCategory = value!;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      // Description
+                      Text(
+                        'Description',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1B2A4A),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: descriptionController,
+                        maxLines: 4,
+                        style: GoogleFonts.poppins(fontSize: 14),
+                        decoration: InputDecoration(
+                          hintText: 'Describe the issue in detail...',
+                          hintStyle: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: const Color(0xFFB0BEC5),
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFF8F9FC),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE0E4EA),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE0E4EA),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF4A90D9),
+                              width: 1.5,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.all(16),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      // Submit button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.check_circle,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        'Grievance submitted successfully!',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                backgroundColor: const Color(0xFF2ECC71),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                margin: const EdgeInsets.all(16),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1B2A4A),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            elevation: 4,
+                            shadowColor: const Color.fromRGBO(27, 42, 74, 0.3),
+                          ),
+                          child: Text(
+                            'Submit Grievance',
+                            style: GoogleFonts.poppins(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

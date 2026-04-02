@@ -1,0 +1,71 @@
+[
+  {
+    "candidate_profile": {
+      "name": "Farhad Ali",
+      "age": 36,
+      "father_name": "Muslim Uddin Ahmed",
+      "party": "All India United Democratic Front (AIUDF)",
+      "constituency": "BHAWANIPUR-SORBHOG (BAJALI), Assam",
+      "profession": "Farmer",
+      "education": "Graduate (B.A. from Gauhati University, 2013)",
+      "voter_enrollment": "41 Nos. Manas constituency"
+    },
+    "financial_summary": {
+      "total_assets": {
+        "movable": "Rs 5,61,000 (~5 Lacs+)",
+        "immovable": "Nil",
+        "grand_total": "Rs 5,61,000"
+      },
+      "movable_assets_breakdown": {
+        "cash_in_hand": "Rs 5,00,000",
+        "bank_deposits": [
+          { "bank": "HDFC Bank Ltd.", "amount": "Rs 10,000" },
+          { "bank": "SBI", "amount": "Rs 50,000" },
+          { "bank": "Fino Payment Bank Ltd.", "amount": "Rs 500" },
+          { "bank": "Bank of Maharashtra", "amount": "Rs 500" }
+        ],
+        "jewelry_and_vehicles": "Nil"
+      },
+      "liabilities": "Nil",
+      "income_tax_status": {
+        "pan_provided": "Yes",
+        "last_itr_filed": "None",
+        "total_income_shown": "Rs 0"
+      }
+    },
+    "criminal_background": {
+      "total_pending_cases": 5,
+      "serious_charges_summary": [
+        "Waging or attempting to wage war against the Govt of India (IPC 121)",
+        "Sedition (IPC 124A) - 2 charges",
+        "Unlawful Activities (Prevention) Act (UAPA) Sections 10, 13, 18",
+        "Promoting enmity between religious groups (IPC 153A) - 2 charges",
+        "Criminal Conspiracy (IPC 120B) - 5 charges",
+        "Assault to deter public servant from duty (IPC 353)"
+      ],
+      "case_details": [
+        {
+          "fir_no": "Nagarbera PS Case No 115/2022",
+          "sections": "IPC and Sections 10, 13 UA(P) Act 1967",
+          "status": "Pending"
+        },
+        {
+          "fir_no": "SOU PS Case No 2/2022",
+          "sections": "IPC 120B, 124A, 153A, 353 and Section 18 UA(P) Act 1967",
+          "status": "Pending"
+        }
+      ],
+      "sources": "Self-declared Affidavit archived by Association for Democratic Reforms (ADR)"
+    },
+    "business_and_contracts": {
+      "handling_family_companies": "N.A. (Not Applicable)",
+      "company_turnover_estimated": "N.A.",
+      "government_contracts": "None declared by candidate, spouse, or dependents"
+    },
+    "controversies_and_notes": {
+      "pfi_link_allegations": "Farhad Ali was arrested in September 2022 in connection with alleged anti-establishment propaganda and communal polarization linked to the Popular Front of India (PFI).",
+      "legal_challenges": "He challenged a 2022 order extending his investigation period under the UAPA, arguing the Chief Judicial Magistrate lacked jurisdiction for such extensions.",
+      "corruption_indicators": "No direct corruption or bribery cases are listed; assets are relatively low (approx. 5.6 lakhs) compared to many political candidates."
+    }
+  }
+]
