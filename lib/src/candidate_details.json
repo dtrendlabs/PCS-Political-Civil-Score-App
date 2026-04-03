@@ -8,21 +8,39 @@
       "constituency": "BHAWANIPUR-SORBHOG (BAJALI), Assam",
       "profession": "Farmer",
       "education": "Graduate (B.A. from Gauhati University, 2013)",
-      "voter_enrollment": "41 Nos. Manas constituency"
+      "voter_enrollment": "41 Nos. Manas constituency",
+      "source": "https://www.myneta.info/LokSabha2024/candidate.php?candidate_id=912"
     },
     "financial_summary": {
       "total_assets": {
         "movable": "Rs 5,61,000 (~5 Lacs+)",
         "immovable": "Nil",
-        "grand_total": "Rs 5,61,000"
+        "grand_total": "Rs 5,61,000",
+        "source": "https://www.myneta.info/LokSabha2024/candidate.php?candidate_id=912"
       },
       "movable_assets_breakdown": {
         "cash_in_hand": "Rs 5,00,000",
-        "bank_deposits": [
-          { "bank": "HDFC Bank Ltd.", "amount": "Rs 10,000" },
-          { "bank": "SBI", "amount": "Rs 50,000" },
-          { "bank": "Fino Payment Bank Ltd.", "amount": "Rs 500" },
-          { "bank": "Bank of Maharashtra", "amount": "Rs 500" }
+        "properties": [
+          {
+            "property_type": "Bank Deposit (HDFC Bank)",
+            "value": "Rs 10,000",
+            "source": "https://www.myneta.info/LokSabha2024/candidate.php?candidate_id=912"
+          },
+          {
+            "property_type": "Bank Deposit (SBI)",
+            "value": "Rs 50,000",
+            "source": "https://www.myneta.info/LokSabha2024/candidate.php?candidate_id=912"
+          },
+          {
+            "property_type": "Bank Deposit (Fino Payment Bank)",
+            "value": "Rs 500",
+            "source": "N/A"
+          },
+          {
+            "property_type": "Bank Deposit (Bank of Maharashtra)",
+            "value": "Rs 500",
+            "source": "N/A"
+          }
         ],
         "jewelry_and_vehicles": "Nil"
       },
@@ -30,7 +48,8 @@
       "income_tax_status": {
         "pan_provided": "Yes",
         "last_itr_filed": "None",
-        "total_income_shown": "Rs 0"
+        "total_income_shown": "Rs 0",
+        "source": "N/A"
       }
     },
     "criminal_background": {
@@ -47,25 +66,36 @@
         {
           "fir_no": "Nagarbera PS Case No 115/2022",
           "sections": "IPC and Sections 10, 13 UA(P) Act 1967",
+          "source": "https://www.myneta.info/LokSabha2024/candidate.php?candidate_id=912",
           "status": "Pending"
         },
         {
           "fir_no": "SOU PS Case No 2/2022",
           "sections": "IPC 120B, 124A, 153A, 353 and Section 18 UA(P) Act 1967",
+          "source": "https://adrindia.org/",
           "status": "Pending"
         }
       ],
-      "sources": "Self-declared Affidavit archived by Association for Democratic Reforms (ADR)"
+      "sources": "Self-declared Affidavit archived by Association for Democratic Reforms (ADR)",
+      "source_url": "https://www.myneta.info/LokSabha2024/candidate.php?candidate_id=912"
     },
     "business_and_contracts": {
       "handling_family_companies": "N.A. (Not Applicable)",
       "company_turnover_estimated": "N.A.",
-      "government_contracts": "None declared by candidate, spouse, or dependents"
+      "government_contracts": "None declared by candidate, spouse, or dependents",
+      "source": "N/A"
     },
-    "controversies_and_notes": {
-      "pfi_link_allegations": "Farhad Ali was arrested in September 2022 in connection with alleged anti-establishment propaganda and communal polarization linked to the Popular Front of India (PFI).",
-      "legal_challenges": "He challenged a 2022 order extending his investigation period under the UAPA, arguing the Chief Judicial Magistrate lacked jurisdiction for such extensions.",
-      "corruption_indicators": "No direct corruption or bribery cases are listed; assets are relatively low (approx. 5.6 lakhs) compared to many political candidates."
-    }
+    "controversies_and_notes": [
+      {
+        "controversy_description": "Farhad Ali was arrested in September 2022 in connection with alleged anti-establishment propaganda and communal polarization linked to the Popular Front of India (PFI).",
+        "source": "https://www.ndtv.com/india-news/pfi-crackdown-news",
+        "corruption_indicators": "No direct corruption or bribery cases listed."
+      },
+      {
+        "controversy_description": "He challenged a 2022 order extending his investigation period under the UAPA, arguing the Chief Judicial Magistrate lacked jurisdiction for such extensions.",
+        "source": "https://www.livelaw.in/",
+        "corruption_indicators": "Assets relatively low (approx. 5.6 lakhs) compared to many political candidates."
+      }
+    ]
   }
 ]

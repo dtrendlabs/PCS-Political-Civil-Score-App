@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as dev;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../config/app_secrets.dart';
@@ -9,25 +10,29 @@ import '../data/politicians_data.dart';
 class GeminiService {
   GeminiService._();
 
-  static GenerativeModel? _model;
   static String? _promptTemplate;
-
-  // ─── Cache for already-fetched profiles ─────────────────────────
   static final Map<String, Map<String, dynamic>> _cache = {};
 
-  /// Initialize the Gemini model (lazy, called once).
-  static GenerativeModel _getModel() {
-    _model ??= GenerativeModel(
-      model: 'gemini-2.0-flash',
+  // ─── List of models to try in order of preference ───────────────────
+  static const List<String> _modelsToTry = [
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-latest',
+    'gemini-pro-1.5',
+    'gemini-pro',
+  ];
+
+  /// Initialize the Gemini model for a specific model ID.
+  static GenerativeModel _createModel(String modelName) {
+    return GenerativeModel(
+      model: modelName,
       apiKey: AppSecrets.googleGeminiApiKey,
       generationConfig: GenerationConfig(
         temperature: 0.4,
         topP: 0.95,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 2048,
         responseMimeType: 'application/json',
       ),
     );
-    return _model!;
   }
 
   /// Load the prompt template from the .md asset file.
@@ -58,9 +63,6 @@ Generate the complete JSON profile for this candidate now.
   }
 
   /// Fetch a detailed candidate profile from Gemini.
-  ///
-  /// Returns a parsed `Map<String, dynamic>` matching the JSON schema
-  /// defined in the prompt template, or `null` if the call fails.
   static Future<Map<String, dynamic>?> fetchCandidateProfile(
       LokSabhaMember member) async {
     // Check cache first
@@ -69,30 +71,50 @@ Generate the complete JSON profile for this candidate now.
       return _cache[cacheKey];
     }
 
-    try {
-      final model = _getModel();
-      final prompt = await _buildPrompt(member);
+    Object? lastError;
 
-      final response = await model.generateContent([Content.text(prompt)]);
-      final text = response.text;
+    // Try each model until one works or we run out
+    for (final modelName in _modelsToTry) {
+      try {
+        dev.log('Attempting fetch with model: $modelName', name: 'GEMINI_SERVICE');
+        
+        final model = _createModel(modelName);
+        final prompt = await _buildPrompt(member);
 
-      if (text == null || text.isEmpty) {
-        return null;
+        final response = await model.generateContent([Content.text(prompt)]);
+        final text = response.text;
+
+        if (text == null || text.isEmpty) {
+          throw Exception('Empty response from model');
+        }
+
+        // Parse and return on success
+        final jsonData = json.decode(text) as Map<String, dynamic>;
+        _cache[cacheKey] = jsonData;
+        
+        dev.log('Successfully used model: $modelName', name: 'GEMINI_SERVICE');
+        
+        return jsonData;
+      } catch (e) {
+        lastError = e;
+        final errorStr = e.toString();
+        
+        // If it's a 404 (not found) or 501 (not implemented), try the next model
+        if (errorStr.contains('not found') || errorStr.contains('404') || errorStr.contains('not supported')) {
+          dev.log('Model $modelName failed (not found/supported). Trying next...', name: 'GEMINI_SERVICE');
+          continue;
+        }
+        
+        // For other errors (like 429 quota), stop and report to UI
+        rethrow;
       }
-
-      // Parse the JSON response
-      final jsonData = json.decode(text) as Map<String, dynamic>;
-
-      // Cache it
-      _cache[cacheKey] = jsonData;
-
-      return jsonData;
-    } catch (e) {
-      // Log failure for debugging — never log API keys!
-      // ignore: avoid_print
-      print('Gemini API error: $e');
-      return null;
     }
+
+    // If we're here, all models failed
+    if (lastError != null) {
+      throw lastError;
+    }
+    return null;
   }
 
   /// Clear the in-memory cache.

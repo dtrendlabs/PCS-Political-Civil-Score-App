@@ -1,8 +1,7 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../src/data/politicians_data.dart';
 import '../src/services/gemini_service.dart';
 
@@ -19,7 +18,8 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
   Map<String, dynamic>? _detailData;
   bool _isLoading = true;
   bool _hasError = false;
-  String _dataSource = ''; // 'gemini' or 'local'
+  String _dataSource = '';
+  String _errorMessage = '';
 
   @override
   void initState() {
@@ -31,10 +31,11 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
     setState(() {
       _isLoading = true;
       _hasError = false;
+      _errorMessage = '';
     });
 
     try {
-      // Try Gemini API first
+      // Call Gemini API to get real candidate data
       final geminiData =
           await GeminiService.fetchCandidateProfile(widget.member);
 
@@ -47,24 +48,42 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
         return;
       }
 
-      // Fallback: load from local static JSON
-      final jsonString =
-          await rootBundle.loadString('lib/src/candidate_details.json');
-      final List<dynamic> list = json.decode(jsonString) as List<dynamic>;
-      if (list.isNotEmpty && mounted) {
-        setState(() {
-          _detailData = list[0] as Map<String, dynamic>;
-          _isLoading = false;
-          _dataSource = 'local';
-        });
-      }
-    } catch (e) {
+      // Gemini returned null — treat as error
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _hasError = _detailData == null;
+          _hasError = true;
+          _errorMessage = 'Gemini returned no data. Check your API key.';
         });
       }
+    } catch (e) {
+      // TECHNICAL LOG: Print the raw error directly for debugging
+      debugPrint('MEMBER_DETAIL_SCREEN ERROR: $e');
+      
+      if (mounted) {
+        String message = e.toString();
+        // Specifically catch rate limit errors common on the Free Tier (429)
+        if (message.contains('429') || message.contains('quota')) {
+          message = 'Free Tier limit reached. Please wait a minute before retrying.';
+        } else if (message.contains('api key') || message.contains('403') || message.contains('401')) {
+          message = 'Invalid API key. Please check your app_secrets.dart file.';
+        }
+
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+          _errorMessage = message;
+        });
+      }
+    }
+  }
+
+  // ─── Open URL in browser ───────────────────────────────────────
+  Future<void> _openUrl(String url) async {
+    if (url.isEmpty || url == 'N/A') return;
+    final uri = Uri.tryParse(url);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -88,6 +107,7 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
     );
   }
 
+  // ─── Loading State ─────────────────────────────────────────────
   Widget _buildLoadingState() {
     return SizedBox(
       height: 350,
@@ -126,6 +146,7 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
     );
   }
 
+  // ─── Error State ───────────────────────────────────────────────
   Widget _buildErrorState() {
     return SizedBox(
       height: 350,
@@ -152,11 +173,19 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              'Check your internet or API key',
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: const Color(0xFF7A8BA5),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                _errorMessage.isNotEmpty
+                    ? _errorMessage
+                    : 'Check your internet or API key',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: const Color(0xFF7A8BA5),
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(height: 20),
@@ -183,7 +212,7 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
     );
   }
 
-  // ─── Sliver App Bar with member photo ──────────────────────────
+  // ─── Sliver App Bar ────────────────────────────────────────────
   Widget _buildSliverAppBar() {
     final m = widget.member;
     return SliverAppBar(
@@ -197,8 +226,8 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
             color: Colors.black.withAlpha(50),
             shape: BoxShape.circle,
           ),
-          child:
-              const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+          child: const Icon(Icons.arrow_back_rounded,
+              color: Colors.white, size: 20),
         ),
         onPressed: () => Navigator.pop(context),
       ),
@@ -216,7 +245,6 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 32),
-                // Member photo
                 Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
@@ -250,7 +278,6 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                // Status tag
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -278,7 +305,6 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Name
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: Text(
@@ -292,7 +318,6 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 6),
-                // Party & constituency
                 Text(
                   '${m.party} • ${m.constituency}',
                   textAlign: TextAlign.center,
@@ -323,99 +348,56 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
     final business =
         detail?['business_and_contracts'] as Map<String, dynamic>? ?? {};
     final controversies =
-        detail?['controversies_and_notes'] as Map<String, dynamic>? ?? {};
+        detail?['controversies_and_notes'] as List<dynamic>? ?? [];
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
       child: Column(
         children: [
-          // Quick info chips
           _buildQuickInfoRow(m),
           const SizedBox(height: 20),
-
-          // 1. Candidate Profile
           _buildSection(
             icon: Icons.person_outline,
             title: 'Candidate Profile',
             color: const Color(0xFF4A90D9),
+            sourceUrl: profile['source']?.toString(),
             child: _buildProfileDetails(profile, m),
           ),
           const SizedBox(height: 16),
-
-          // 2. Financial Summary
           _buildSection(
             icon: Icons.account_balance_wallet_outlined,
             title: 'Financial Summary',
             color: const Color(0xFF2ECC71),
+            sourceUrl: (financial['total_assets']
+                as Map<String, dynamic>?)?['source']?.toString(),
             child: _buildFinancialDetails(financial),
           ),
           const SizedBox(height: 16),
-
-          // 3. Criminal Background
           _buildSection(
             icon: Icons.gavel_outlined,
             title: 'Criminal Background',
             color: const Color(0xFFE74C3C),
+            sourceUrl: criminal['source_url']?.toString(),
             child: _buildCriminalDetails(criminal),
           ),
           const SizedBox(height: 16),
-
-          // 4. Business & Contracts
           _buildSection(
             icon: Icons.business_center_outlined,
             title: 'Business & Contracts',
             color: const Color(0xFFE67E22),
+            sourceUrl: business['source']?.toString(),
             child: _buildBusinessDetails(business),
           ),
           const SizedBox(height: 16),
-
-          // 5. Controversies & Notes
           _buildSection(
             icon: Icons.report_outlined,
             title: 'Controversies & Notes',
             color: const Color(0xFF9B59B6),
             child: _buildControversyDetails(controversies),
           ),
-
           const SizedBox(height: 16),
-
           // Data source indicator
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: _dataSource == 'gemini'
-                  ? const Color(0xFFF0F4FF)
-                  : const Color(0xFFF8F9FC),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  _dataSource == 'gemini'
-                      ? Icons.auto_awesome
-                      : Icons.storage_outlined,
-                  size: 14,
-                  color: _dataSource == 'gemini'
-                      ? const Color(0xFF4A90D9)
-                      : const Color(0xFF7A8BA5),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  _dataSource == 'gemini'
-                      ? 'Generated by Google Gemini AI'
-                      : 'Loaded from local data',
-                  style: GoogleFonts.poppins(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    color: _dataSource == 'gemini'
-                        ? const Color(0xFF4A90D9)
-                        : const Color(0xFF7A8BA5),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          _buildDataSourceBadge(),
         ],
       ),
     );
@@ -485,13 +467,17 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
     );
   }
 
-  // ─── Section Card ──────────────────────────────────────────────
+  // ─── Section Card (with optional source link) ──────────────────
   Widget _buildSection({
     required IconData icon,
     required String title,
     required Color color,
     required Widget child,
+    String? sourceUrl,
   }) {
+    final hasLink =
+        sourceUrl != null && sourceUrl.isNotEmpty && sourceUrl != 'N/A';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -520,19 +506,57 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                 child: Icon(icon, color: color, size: 20),
               ),
               const SizedBox(width: 12),
-              Text(
-                title,
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF1B2A4A),
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF1B2A4A),
+                  ),
                 ),
               ),
+              if (hasLink) _buildLinkButton(sourceUrl),
             ],
           ),
           const SizedBox(height: 16),
           child,
         ],
+      ),
+    );
+  }
+
+  // ─── 🔗 Link Button ───────────────────────────────────────────
+  Widget _buildLinkButton(String url, {double size = 32}) {
+    return GestureDetector(
+      onTap: () => _openUrl(url),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: const Color(0xFF4A90D9).withAlpha(15),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Icon(
+          Icons.link_rounded,
+          color: Color(0xFF4A90D9),
+          size: 18,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInlineLinkIcon(String url) {
+    if (url.isEmpty || url == 'N/A') return const SizedBox.shrink();
+    return GestureDetector(
+      onTap: () => _openUrl(url),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 6),
+        child: Icon(
+          Icons.link_rounded,
+          color: const Color(0xFF4A90D9).withAlpha(180),
+          size: 16,
+        ),
       ),
     );
   }
@@ -565,13 +589,12 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
         financial['movable_assets_breakdown'] as Map<String, dynamic>? ?? {};
     final taxStatus =
         financial['income_tax_status'] as Map<String, dynamic>? ?? {};
-    final bankDeposits =
-        movable['bank_deposits'] as List<dynamic>? ?? [];
+    final properties = movable['properties'] as List<dynamic>? ?? [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Total Assets summary
+        // Total Assets banner
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(14),
@@ -615,17 +638,15 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
         ),
         const SizedBox(height: 16),
 
-        // Movable breakdown
-        _buildDetailRow(
-            'Cash in Hand', movable['cash_in_hand'] ?? 'N/A'),
+        _buildDetailRow('Cash in Hand', movable['cash_in_hand'] ?? 'N/A'),
         _buildDetailRow('Jewelry & Vehicles',
             movable['jewelry_and_vehicles'] ?? 'N/A'),
 
-        // Bank deposits
-        if (bankDeposits.isNotEmpty) ...[
+        // Properties list (with source links)
+        if (properties.isNotEmpty) ...[
           const SizedBox(height: 10),
           Text(
-            'Bank Deposits',
+            'Properties / Deposits',
             style: GoogleFonts.poppins(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -633,8 +654,9 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          ...bankDeposits.map((dep) {
-            final deposit = dep as Map<String, dynamic>;
+          ...properties.map((p) {
+            final prop = p as Map<String, dynamic>;
+            final sourceUrl = prop['source']?.toString() ?? '';
             return Container(
               margin: const EdgeInsets.only(bottom: 6),
               padding:
@@ -644,25 +666,30 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    child: Text(
-                      deposit['bank'] ?? '',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: const Color(0xFF4A5568),
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          prop['property_type'] ?? '',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: const Color(0xFF4A5568),
+                          ),
+                        ),
+                        Text(
+                          prop['value'] ?? '',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF1B2A4A),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  Text(
-                    deposit['amount'] ?? '',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1B2A4A),
-                    ),
-                  ),
+                  _buildInlineLinkIcon(sourceUrl),
                 ],
               ),
             );
@@ -670,18 +697,22 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
         ],
 
         const SizedBox(height: 12),
-        _buildDetailRow(
-            'Liabilities', financial['liabilities'] ?? 'N/A'),
+        _buildDetailRow('Liabilities', financial['liabilities'] ?? 'N/A'),
 
         // Tax status
         const SizedBox(height: 10),
-        Text(
-          'Income Tax Status',
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF1B2A4A),
-          ),
+        Row(
+          children: [
+            Text(
+              'Income Tax Status',
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF1B2A4A),
+              ),
+            ),
+            _buildInlineLinkIcon(taxStatus['source']?.toString() ?? ''),
+          ],
         ),
         const SizedBox(height: 8),
         _buildDetailRow('PAN Provided', taxStatus['pan_provided'] ?? 'N/A'),
@@ -736,7 +767,7 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Pending cases badge
+        // Pending cases alert
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(14),
@@ -817,7 +848,7 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
           }),
         ],
 
-        // Case details
+        // Case details (with source links)
         if (caseDetails.isNotEmpty) ...[
           const SizedBox(height: 16),
           Text(
@@ -832,20 +863,19 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
           ...caseDetails.map((caseItem) {
             final c = caseItem as Map<String, dynamic>;
             final status = c['status'] ?? 'Unknown';
+            final caseSource = c['source']?.toString() ?? '';
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: const Color(0xFFF8F9FC),
                 borderRadius: BorderRadius.circular(12),
-                border:
-                    Border.all(color: const Color(0xFFF0F2F5)),
+                border: Border.all(color: const Color(0xFFF0F2F5)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Text(
@@ -857,6 +887,8 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
                           ),
                         ),
                       ),
+                      _buildInlineLinkIcon(caseSource),
+                      const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),
@@ -895,7 +927,7 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
           }),
         ],
 
-        // Source
+        // ADR source
         if (sources.isNotEmpty) ...[
           const SizedBox(height: 10),
           Container(
@@ -943,10 +975,9 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
     );
   }
 
-  // ─── 5. Controversies & Notes ──────────────────────────────────
-  Widget _buildControversyDetails(Map<String, dynamic> controversies) {
-    final entries = controversies.entries.toList();
-    if (entries.isEmpty) {
+  // ─── 5. Controversies & Notes (array with source links) ────────
+  Widget _buildControversyDetails(List<dynamic> controversies) {
+    if (controversies.isEmpty) {
       return Text(
         'No controversies or notes on record.',
         style: GoogleFonts.poppins(
@@ -957,46 +988,134 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
     }
 
     return Column(
-      children: entries.asMap().entries.map((entry) {
-        final key = entry.value.key;
-        final value = entry.value.value.toString();
-        final label = _formatKey(key);
+      children: controversies.asMap().entries.map((entry) {
+        final item = entry.value as Map<String, dynamic>;
+        final description = item['controversy_description']?.toString() ?? '';
+        final sourceUrl = item['source']?.toString() ?? '';
+        final corruption = item['corruption_indicators']?.toString() ?? '';
 
         return Container(
-          margin:
-              EdgeInsets.only(bottom: entry.key < entries.length - 1 ? 12 : 0),
+          margin: EdgeInsets.only(
+              bottom: entry.key < controversies.length - 1 ? 12 : 0),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8F9FC),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFF0F2F5)),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF9B59B6).withAlpha(15),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF9B59B6),
+              // Controversy description + link
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 4),
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF9B59B6).withAlpha(15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '#${entry.key + 1}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF9B59B6),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      description,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: const Color(0xFF4A5568),
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                  _buildInlineLinkIcon(sourceUrl),
+                ],
+              ),
+
+              // Corruption indicator
+              if (corruption.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF8E7),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.security_outlined,
+                          size: 14, color: Color(0xFFF39C12)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          corruption,
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: const Color(0xFF4A5568),
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                value,
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: const Color(0xFF4A5568),
-                  height: 1.5,
-                ),
-              ),
+              ],
             ],
           ),
         );
       }).toList(),
+    );
+  }
+
+  // ─── Data Source Badge ─────────────────────────────────────────
+  Widget _buildDataSourceBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: _dataSource == 'gemini'
+            ? const Color(0xFFF0F4FF)
+            : const Color(0xFFF8F9FC),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            _dataSource == 'gemini'
+                ? Icons.auto_awesome
+                : Icons.storage_outlined,
+            size: 14,
+            color: _dataSource == 'gemini'
+                ? const Color(0xFF4A90D9)
+                : const Color(0xFF7A8BA5),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            _dataSource == 'gemini'
+                ? 'Generated by Google Gemini AI'
+                : 'Loaded from local data',
+            style: GoogleFonts.poppins(
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: _dataSource == 'gemini'
+                  ? const Color(0xFF4A90D9)
+                  : const Color(0xFF7A8BA5),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1038,16 +1157,5 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
         ],
       ),
     );
-  }
-
-  // ─── Helper: format JSON keys to readable labels ───────────────
-  String _formatKey(String key) {
-    return key
-        .replaceAll('_', ' ')
-        .split(' ')
-        .map((w) => w.isNotEmpty
-            ? '${w[0].toUpperCase()}${w.substring(1)}'
-            : '')
-        .join(' ');
   }
 }
