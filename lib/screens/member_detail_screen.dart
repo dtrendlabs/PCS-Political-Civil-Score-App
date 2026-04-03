@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../src/data/politicians_data.dart';
 import '../src/services/gemini_service.dart';
+import '../src/services/openai_service.dart';
 
 class MemberDetailScreen extends StatefulWidget {
   final LokSabhaMember member;
@@ -20,6 +21,7 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
   bool _hasError = false;
   String _dataSource = '';
   String _errorMessage = '';
+  bool _useOpenAI = false;
 
   @override
   void initState() {
@@ -34,8 +36,9 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
       _errorMessage = '';
     });
 
+    // ── 1. Try Gemini first ──────────────────────────────────────
     try {
-      // Call Gemini API to get real candidate data
+      debugPrint('MEMBER_DETAIL: Trying Gemini first...');
       final geminiData =
           await GeminiService.fetchCandidateProfile(widget.member);
 
@@ -47,26 +50,49 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
         });
         return;
       }
+    } catch (e) {
+      debugPrint('MEMBER_DETAIL: Gemini failed — $e');
+      debugPrint('MEMBER_DETAIL: Falling back to OpenAI ChatGPT...');
+    }
 
-      // Gemini returned null — treat as error
+    // ── 2. Fallback to OpenAI ────────────────────────────────────
+    try {
+      if (!mounted) return;
+      final openaiData =
+          await OpenAIService.fetchCandidateProfile(widget.member);
+
+      if (openaiData != null && mounted) {
+        setState(() {
+          _detailData = openaiData;
+          _isLoading = false;
+          _dataSource = 'openai';
+        });
+        return;
+      }
+
+      // Both returned null
       if (mounted) {
         setState(() {
           _isLoading = false;
           _hasError = true;
-          _errorMessage = 'Gemini returned no data. Check your API key.';
+          _errorMessage =
+              'Both Gemini and ChatGPT returned no data. Check your API keys.';
         });
       }
     } catch (e) {
-      // TECHNICAL LOG: Print the raw error directly for debugging
-      debugPrint('MEMBER_DETAIL_SCREEN ERROR: $e');
-      
+      debugPrint('MEMBER_DETAIL: OpenAI also failed — $e');
+
       if (mounted) {
         String message = e.toString();
-        // Specifically catch rate limit errors common on the Free Tier (429)
         if (message.contains('429') || message.contains('quota')) {
-          message = 'Free Tier limit reached. Please wait a minute before retrying.';
-        } else if (message.contains('api key') || message.contains('403') || message.contains('401')) {
-          message = 'Invalid API key. Please check your app_secrets.dart file.';
+          message =
+              'Both AI providers hit rate limits. Please wait before retrying.';
+        } else if (message.contains('api key') ||
+            message.contains('403') ||
+            message.contains('401')) {
+          message = 'API key error. Check both Gemini & OpenAI keys.';
+        } else {
+          message = 'Both Gemini and ChatGPT failed.\n$message';
         }
 
         setState(() {
@@ -125,7 +151,9 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
             ),
             const SizedBox(height: 20),
             Text(
-              'Fetching profile from Gemini AI...',
+              _useOpenAI
+                  ? 'Fetching profile from ChatGPT...'
+                  : 'Fetching profile from Gemini AI...',
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -231,6 +259,10 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
         ),
         onPressed: () => Navigator.pop(context),
       ),
+      actions: [
+        _buildAIProviderToggle(),
+        const SizedBox(width: 8),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: const BoxDecoration(
@@ -1079,39 +1111,97 @@ class _MemberDetailScreenState extends State<MemberDetailScreen> {
     );
   }
 
+  // ─── AI Provider Toggle Button ────────────────────────────────
+  Widget _buildAIProviderToggle() {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _useOpenAI = !_useOpenAI;
+        });
+        _loadDetailData();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: _useOpenAI
+              ? const Color(0xFF10A37F).withAlpha(40)
+              : const Color(0xFF4A90D9).withAlpha(40),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: _useOpenAI
+                ? const Color(0xFF10A37F).withAlpha(100)
+                : const Color(0xFF4A90D9).withAlpha(100),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              _useOpenAI ? Icons.chat_bubble_outline : Icons.auto_awesome,
+              size: 14,
+              color: _useOpenAI
+                  ? const Color(0xFF10A37F)
+                  : const Color(0xFF4A90D9),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              _useOpenAI ? 'ChatGPT' : 'Gemini',
+              style: GoogleFonts.poppins(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: _useOpenAI
+                    ? const Color(0xFF10A37F)
+                    : const Color(0xFF4A90D9),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ─── Data Source Badge ─────────────────────────────────────────
   Widget _buildDataSourceBadge() {
+    final isGemini = _dataSource == 'gemini';
+    final isOpenAI = _dataSource == 'openai';
+    final Color badgeColor = isOpenAI
+        ? const Color(0xFF10A37F)
+        : isGemini
+            ? const Color(0xFF4A90D9)
+            : const Color(0xFF7A8BA5);
+    final Color bgColor = isOpenAI
+        ? const Color(0xFFE6F9F4)
+        : isGemini
+            ? const Color(0xFFF0F4FF)
+            : const Color(0xFFF8F9FC);
+    final String label = isOpenAI
+        ? 'Generated by OpenAI ChatGPT'
+        : isGemini
+            ? 'Generated by Google Gemini AI'
+            : 'Loaded from local data';
+    final IconData icon = isOpenAI
+        ? Icons.chat_bubble_outline
+        : isGemini
+            ? Icons.auto_awesome
+            : Icons.storage_outlined;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: _dataSource == 'gemini'
-            ? const Color(0xFFF0F4FF)
-            : const Color(0xFFF8F9FC),
+        color: bgColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            _dataSource == 'gemini'
-                ? Icons.auto_awesome
-                : Icons.storage_outlined,
-            size: 14,
-            color: _dataSource == 'gemini'
-                ? const Color(0xFF4A90D9)
-                : const Color(0xFF7A8BA5),
-          ),
+          Icon(icon, size: 14, color: badgeColor),
           const SizedBox(width: 6),
           Text(
-            _dataSource == 'gemini'
-                ? 'Generated by Google Gemini AI'
-                : 'Loaded from local data',
+            label,
             style: GoogleFonts.poppins(
               fontSize: 10,
               fontWeight: FontWeight.w500,
-              color: _dataSource == 'gemini'
-                  ? const Color(0xFF4A90D9)
-                  : const Color(0xFF7A8BA5),
+              color: badgeColor,
             ),
           ),
         ],

@@ -15,6 +15,7 @@ class GeminiService {
 
   // ─── List of models to try in order of preference ───────────────────
   static const List<String> _modelsToTry = [
+    'gemini-3-flash-preview',
     'gemini-1.5-flash',
     'gemini-1.5-flash-latest',
     'gemini-pro-1.5',
@@ -97,11 +98,24 @@ Generate the complete JSON profile for this candidate now.
         return jsonData;
       } catch (e) {
         lastError = e;
-        final errorStr = e.toString();
-        
-        // If it's a 404 (not found) or 501 (not implemented), try the next model
-        if (errorStr.contains('not found') || errorStr.contains('404') || errorStr.contains('not supported')) {
-          dev.log('Model $modelName failed (not found/supported). Trying next...', name: 'GEMINI_SERVICE');
+        // Log the failure
+        final errorMsg = e.toString().toLowerCase();
+        dev.log('Model $modelName failed: $errorMsg', name: 'GEMINI_SERVICE');
+
+        // Fallback for: 404, 500, 503, 504, "unavailable", "not found", "limit reached"
+        // Basically anything that isn't a 400 Bad Request (which is usually a prompt/config issue)
+        final isRetryable = errorMsg.contains('not found') || 
+                           errorMsg.contains('404') || 
+                           errorMsg.contains('500') ||
+                           errorMsg.contains('503') ||
+                           errorMsg.contains('504') ||
+                           errorMsg.contains('unavailable') ||
+                           errorMsg.contains('overloaded') ||
+                           errorMsg.contains('quota') ||
+                           errorMsg.contains('429');
+
+        if (isRetryable) {
+          dev.log('Model $modelName is unavailable or limited. Trying next model...', name: 'GEMINI_SERVICE');
           continue;
         }
         
