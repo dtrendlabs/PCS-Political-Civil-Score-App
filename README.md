@@ -157,6 +157,9 @@ Gradle Sync → Run
 * Research & analytics
 * Governance participation monitoring
 
+# 👩‍💻 Core Fuctiionalty 
+![alt](https://raw.githubusercontent.com/dtrendlabs/PCS-Political-Civil-Score-App/refs/heads/main/docs_resources/app_stucture_img.jpg)
+
 ---
 
 # 🧩 Future Improvements
