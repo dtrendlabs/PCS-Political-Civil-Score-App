@@ -1,12 +1,12 @@
-/// ┌──────────────────────────────────────────────────────────────────┐
-/// │  📄 TEMPLATE — Copy this file to app_secrets.dart and fill in  │
-/// │  your real API keys. This template IS safe to commit.           │
-/// └──────────────────────────────────────────────────────────────────┘
-///
-/// Steps:
-///   1. Copy this file:  app_secrets.template.dart → app_secrets.dart
-///   2. Replace all 'YOUR_*' placeholders with real values
-///   3. The actual app_secrets.dart is in .gitignore — it won't be pushed
+// ┌──────────────────────────────────────────────────────────────────┐
+// │  📄 TEMPLATE — Copy this file to app_secrets.dart and fill in  │
+// │  your real API keys. This template IS safe to commit.           │
+// └──────────────────────────────────────────────────────────────────┘
+//
+// Steps:
+//   1. Copy this file:  app_secrets.template.dart → app_secrets.dart
+//   2. Replace all 'YOUR_*' placeholders with real values
+//   3. The actual app_secrets.dart is in .gitignore — it won't be pushed
 
 class AppSecrets {
   AppSecrets._();

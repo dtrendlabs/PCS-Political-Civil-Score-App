@@ -64,8 +64,8 @@ class _HomeScreenState extends State<HomeScreen> {
             Navigator.push(
               context,
               PageRouteBuilder(
-                pageBuilder: (_, __, ___) => const SearchScreen(),
-                transitionsBuilder: (_, animation, __, child) {
+                pageBuilder: (_, _, _) => const SearchScreen(),
+                transitionsBuilder: (_, animation, _, child) {
                   return FadeTransition(opacity: animation, child: child);
                 },
                 transitionDuration: const Duration(milliseconds: 250),
@@ -376,14 +376,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 Icons.dark_mode_outlined, 'Dark Mode', trailing: Switch(
               value: false,
               onChanged: (_) {},
-              activeColor: const Color(0xFF4A90D9),
+              activeThumbColor: const Color(0xFF4A90D9),
             )),
             _buildSettingsTile(
                 Icons.notifications_active_outlined, 'Push Notifications',
                 trailing: Switch(
               value: true,
               onChanged: (_) {},
-              activeColor: const Color(0xFF4A90D9),
+              activeThumbColor: const Color(0xFF4A90D9),
             )),
             _buildSettingsTile(Icons.language, 'Language',
                 subtitle: 'English'),
@@ -438,7 +438,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          if (trailing != null) trailing,
+          ?trailing,
         ],
       ),
     );
